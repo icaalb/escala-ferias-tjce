@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escala TJCE 2027 - Férias e Rodízio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>Escala TJCE • Férias</h1>
+    <p>Planejamento automático por Procuradoria e Câmara</p>
+  </div>
+  <div class="header-actions">
+    <label>Ano
+      <select id="year">
+        <option selected>2027</option>
+        <option>2028</option>
+      </select>
+    </label>
+    <button id="exportBtn" class="secondary">Exportar CSV</button>
+    <button id="printBtn" class="secondary">Imprimir/PDF</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <button class="nav active" data-view="dashboard">Painel</button>
+    <button class="nav" data-view="vacations">Lançar férias</button>
+    <button class="nav" data-view="scale">Gerar escala de férias</button>
+    <button class="nav" data-view="generator">Gerador anual TJCE</button>
+    <button class="nav" data-view="tjce">Escala TJCE anual</button>
+    <button class="nav" data-view="substitutions">Substituições</button>
+    <button class="nav" data-view="calendar">Calendário</button>
+    <button class="nav" data-view="chambers">Câmaras</button>
+    <button class="nav" data-view="rules">Regras</button>
+  </aside>
+
+  <main class="content">
+
+    <section id="publicDashboard" class="view active">
+      <div class="public-hero">
+        <div>
+          <span class="eyebrow">CONSULTA PÚBLICA</span>
+          <h2>Escala de atuação perante o TJCE</h2>
+          <p>Painel informativo, interativo e somente para consulta. Os dados exibidos são derivados da escala consolidada cadastrada no sistema administrativo.</p>
+        </div>
+        <div class="public-year">
+          <span>Exercício</span>
+          <strong id="publicYearLabel">2027</strong>
+        </div>
+      </div>
+
+      <div class="public-toolbar">
+        <label>Área
+          <select id="publicAreaFilter">
+            <option value="all">Todas</option>
+            <option value="Direito Público">Direito Público</option>
+            <option value="Direito Privado">Direito Privado</option>
+          </select>
+        </label>
+        <label>Câmara
+          <select id="publicChamberFilter"></select>
+        </label>
+        <label>Mês
+          <select id="publicMonthFilter">
+            <option value="all">Ano inteiro</option>
+            <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+            <option value="2">Março</option><option value="3">Abril</option>
+            <option value="4">Maio</option><option value="5">Junho</option>
+            <option value="6">Julho</option><option value="7">Agosto</option>
+            <option value="8">Setembro</option><option value="9">Outubro</option>
+            <option value="10">Novembro</option><option value="11">Dezembro</option>
+          </select>
+        </label>
+        <button id="publicResetFilters" type="button" class="secondary">Limpar filtros</button>
+      </div>
+
+      <div class="cards public-cards">
+        <article class="card"><span>Sessões cadastradas</span><strong id="publicKpiSessions">0</strong></article>
+        <article class="card"><span>Câmaras com escala</span><strong id="publicKpiChambers">0</strong></article>
+        <article class="card"><span>Substituições aplicadas</span><strong id="publicKpiSubs">0</strong></article>
+        <article class="card"><span>Pendências</span><strong id="publicKpiPending">0</strong></article>
+      </div>
+
+      <div class="panel public-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Agenda consolidada</h2>
+            <p>Procuradoria nominalmente escalada e unidade que efetivamente atuará, quando houver substituição.</p>
+          </div>
+          <span class="readonly-badge">Somente leitura</span>
+        </div>
+        <div id="publicAgenda"></div>
+      </div>
+
+      <div class="panel public-panel">
+        <h2>Resumo por Câmara</h2>
+        <div id="publicChamberSummary"></div>
+      </div>
+
+      <div class="panel public-panel">
+        <h2>Calendário mensal</h2>
+        <p>Visão simplificada das atuações registradas.</p>
+        <div id="publicCalendar"></div>
+      </div>
+
+      <div class="panel public-panel">
+        <h2>Férias por Procuradoria</h2>
+        <p>Exibição exclusivamente informativa dos períodos já cadastrados no sistema.</p>
+        <div id="publicVacations"></div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="view">
+      <div class="cards">
+        <article class="card"><span>Procuradorias</span><strong id="kpiOffices">0</strong></article>
+        <article class="card"><span>Períodos lançados</span><strong id="kpiPeriods">0</strong></article>
+        <article class="card"><span>Procuradorias com férias</span><strong id="kpiWithVac">0</strong></article>
+        <article class="card"><span>Conflitos</span><strong id="kpiConflicts">0</strong></article>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Situação anual</h2><p>Controle dos períodos informados por Procuradoria.</p></div>
+          <select id="dashFilter"></select>
+        </div>
+        <div id="dashboardTable"></div>
+      </div>
+    </section>
+
+    <section id="chamberPanel" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Painel por Câmara</h2>
+            <p>Visão integrada de férias, escala do TJCE, substituições e pendências da Câmara selecionada.</p>
+          </div>
+          <select id="chamberPanelFilter"></select>
+        </div>
+        <div id="chamberPanelContent"></div>
+      </div>
+    </section>
+
+    <section id="conflicts" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Comparação de pedidos conflitantes</h2>
+            <p>O sistema agrupa sobreposições de férias dentro da mesma Câmara e apresenta os períodos lado a lado.</p>
+          </div>
+          <select id="conflictFilter"></select>
+        </div>
+        <div id="conflictTable"></div>
+      </div>
+    </section>
+
+    <section id="consolidated" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Escala consolidada de 2027</h2>
+            <p>Combina sessões do TJCE, Procuradoria nominal, férias, substituição e atuação efetiva.</p>
+          </div>
+          <div class="actions-wrap">
+            <select id="consolidatedFilter"></select>
+            <button id="exportConsolidated" class="secondary" type="button">Exportar consolidada</button>
+          </div>
+        </div>
+        <div id="consolidatedTable"></div>
+      </div>
+    </section>
+
+    <section id="vacations" class="view">
+      <div class="panel">
+        <h2>Informar período de férias</h2>
+        <form id="vacationForm" class="form-grid">
+          <label>Procuradoria
+            <select id="vacOffice" required></select>
+          </label>
+          <label>Início
+            <input type="date" id="vacStart" required>
+          </label>
+          <label>Fim
+            <input type="date" id="vacEnd" required>
+          </label>
+          <button class="primary" type="submit">Adicionar</button>
+        </form>
+        <div id="message" class="message" aria-live="polite"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Períodos cadastrados</h2>
+        <div id="vacationTable"></div>
+      </div>
+    </section>
+
+    <section id="scale" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Escala automática de cobertura</h2>
+            <p>O sistema identifica as férias, verifica conflitos e aponta quais Procuradorias permanecem disponíveis na respectiva Câmara.</p>
+          </div>
+          <button id="generateBtn" class="primary" type="button">Gerar / atualizar escala</button>
+        </div>
+        <div class="legend">
+          <span class="badge ok">Cobertura regular</span>
+          <span class="badge warn">Atenção</span>
+          <span class="badge danger">Conflito</span>
+        </div>
+        <div id="scaleTable"></div>
+      </div>
+    </section>
+
+    <section id="generator" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Gerador anual da escala do TJCE</h2>
+            <p>Configure o dia semanal de sessão de cada Câmara. O sistema gera as datas do ano, aplica o rodízio e consulta férias e substituições.</p>
+          </div>
+          <button id="generateAnnualBtn" class="primary" type="button">Gerar escala anual</button>
+        </div>
+        <div id="generatorMessage" class="message" aria-live="polite"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Configuração das sessões</h2>
+        <p>Deixe como “Não gerar” quando o dia oficial ainda não tiver sido definido.</p>
+        <div id="sessionConfigTable"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Datas sem sessão</h2>
+        <p>Cadastre feriados, recessos ou outras datas que devam ser excluídas da geração automática.</p>
+        <form id="exclusionForm" class="form-grid exclusion-grid">
+          <label>Câmara
+            <select id="exclusionChamber" required></select>
+          </label>
+          <label>Data sem sessão
+            <input type="date" id="exclusionDate" required>
+          </label>
+          <label>Motivo
+            <input id="exclusionReason" placeholder="Ex.: feriado, recesso">
+          </label>
+          <button class="primary" type="submit">Adicionar exclusão</button>
+        </form>
+        <div id="exclusionTable"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Rodízio nominal</h2>
+        <p>A ordem inicial segue a composição cadastrada de cada Câmara. O substituto não altera a sequência do rodízio nominal.</p>
+        <div id="rotationTable"></div>
+      </div>
+    </section>
+
+    <section id="tjce" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Escala anual perante o TJCE</h2>
+            <p>A escala pode ser gerada automaticamente pelo rodízio ou receber lançamentos manuais. O sistema verifica coincidências com férias e aplica a tabela de substituições.</p>
+          </div>
+        </div>
+
+        <form id="tjceForm" class="form-grid tjce-grid">
+          <label>Procuradoria
+            <select id="tjceOffice" required></select>
+          </label>
+          <label>Data de atuação
+            <input type="date" id="tjceDate" required>
+          </label>
+          <label>Órgão / observação
+            <input id="tjceNote" placeholder="Ex.: sessão ordinária">
+          </label>
+          <button class="primary" type="submit">Adicionar à escala</button>
+        </form>
+        <div id="tjceMessage" class="message" aria-live="polite"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Escala cadastrada</h2>
+            <p>Quando houver coincidência com férias, o sistema consulta a tabela de substituições.</p>
+          </div>
+          <select id="tjceFilter"></select>
+        </div>
+        <div id="tjceTable"></div>
+      </div>
+    </section>
+
+    <section id="substitutions" class="view">
+      <div class="panel">
+        <h2>Tabela de substituições</h2>
+        <p>Defina previamente qual Procuradoria substitui cada unidade em caso de férias ou outro afastamento.</p>
+        <form id="subForm" class="form-grid sub-grid">
+          <label>Procuradoria titular
+            <select id="subOffice" required></select>
+          </label>
+          <label>Procuradoria substituta
+            <select id="substituteOffice" required></select>
+          </label>
+          <button class="primary" type="submit">Salvar substituição</button>
+        </form>
+        <div id="subMessage" class="message" aria-live="polite"></div>
+      </div>
+      <div class="panel">
+        <h2>Substituições cadastradas</h2>
+        <div id="subTable"></div>
+      </div>
+    </section>
+
+    <section id="calendar" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Calendário anual</h2><p>Visualização mensal das férias por Procuradoria.</p></div>
+          <select id="calendarFilter"></select>
+        </div>
+        <div id="calendarTable"></div>
+      </div>
+    </section>
+
+    <section id="chambers" class="view">
+      <div class="panel">
+        <h2>Composição por Câmara</h2>
+        <div id="chambersTable"></div>
+      </div>
+    </section>
+
+    <section id="rules" class="view">
+      <div class="panel">
+        <h2>Critérios usados pelo sistema</h2>
+        <div class="rules">
+          <article><strong>Sem nomes</strong><p>A escala utiliza somente o número da Procuradoria.</p></article>
+          <article><strong>60 dias</strong><p>O sistema soma os períodos informados por Procuradoria.</p></article>
+          <article><strong>10 a 30 dias</strong><p>Períodos fora desse intervalo são sinalizados.</p></article>
+          <article><strong>Máximo de 6 períodos</strong><p>O fracionamento anual é controlado.</p></article>
+          <article><strong>Limite por Câmara</strong><p>Quando mais de 50% dos membros da Câmara estiverem simultaneamente de férias, há conflito.</p></article>
+          <article><strong>Cobertura</strong><p>Para cada período, o sistema indica as Procuradorias da mesma Câmara que permanecem disponíveis.</p></article>
+          <article><strong>Escala TJCE</strong><p>Datas de atuação anual não podem coincidir com férias da Procuradoria escalada.</p></article>
+          <article><strong>Substituição</strong><p>Quando houver coincidência, o sistema consulta a tabela de substituições cadastrada.</p></article>
+          <article><strong>Rodízio anual</strong><p>A Procuradoria nominal avança em sequência a cada sessão gerada.</p></article>
+          <article><strong>Datas sem sessão</strong><p>Feriados e recessos cadastrados são excluídos da geração automática.</p></article>
+          <article><strong>Painel por Câmara</strong><p>Concentra férias, sessões, substituições e alertas da unidade selecionada.</p></article>
+          <article><strong>Conflitos</strong><p>Sobreposições são comparadas lado a lado, sem decisão automática quando faltarem critérios funcionais.</p></article>
+          <article><strong>Consolidação</strong><p>A escala final mostra quem estava nominalmente escalado e quem efetivamente atuará.</p></article>
+        </div>
+        <p class="note"><strong>Critério desta versão:</strong> o sistema não escolhe automaticamente um substituto único entre as Procuradorias disponíveis. Ele apresenta a cobertura possível dentro da Câmara. A definição de rodízio/substituição específica pode ser acrescentada após conhecermos a regra administrativa que deverá ser aplicada.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
