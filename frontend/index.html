@@ -15,10 +15,14 @@
   <h2>Área administrativa</h2><form id="loginForm"><input id="username" placeholder="Usuário" required><input id="password" type="password" placeholder="Senha" required><button>Entrar</button></form><p id="loginMsg"></p>
 </section>
 <section id="admin" hidden>
-  <nav><button data-tab="vacations">Férias</button><button data-tab="sessions">Sessões</button><button data-tab="subs">Substituições</button><button data-tab="audit">Auditoria</button></nav>
+  <nav><button data-tab="vacations">Férias</button><button data-tab="generator">Gerador anual</button><button data-tab="sessions">Sessões</button><button data-tab="subs">Substituições</button><button data-tab="users">Usuários</button><button data-tab="audit">Auditoria</button></nav>
   <div id="identity"></div>
   <div id="vacations" class="panel tab">
     <h2>Férias</h2><form id="vacForm"><select id="vacOffice"></select><input id="vacStart" type="date" required><input id="vacEnd" type="date" required><button>Adicionar</button></form><div id="vacMsg"></div><div id="vacTable"></div>
+  </div>
+  <div id="generator" class="panel tab" hidden>
+    <h2>Gerador anual</h2><p>Defina o dia semanal de sessão por órgão e gere a escala do exercício.</p>
+    <div id="scheduleConfig"></div><button id="generateYear">Gerar escala anual</button><p id="generateMsg"></p>
   </div>
   <div id="sessions" class="panel tab" hidden>
     <h2>Sessões TJCE</h2><form id="sessionForm"><select id="sessionOrgan"></select><select id="sessionOffice"></select><input id="sessionDate" type="date" required><input id="sessionNote" placeholder="Observação"><button>Adicionar</button></form><div id="sessionTable"></div>
@@ -26,6 +30,7 @@
   <div id="subs" class="panel tab" hidden>
     <h2>Substituições</h2><form id="subForm"><select id="subOffice"></select><select id="substituteOffice"></select><button>Salvar</button></form><div id="subTable"></div>
   </div>
+  <div id="users" class="panel tab" hidden><h2>Usuários</h2><form id="userForm"><input id="newUsername" placeholder="Usuário" required><input id="newPassword" type="password" placeholder="Senha inicial" required><select id="newRole"><option value="viewer">Consulta</option><option value="operator">Operador</option><option value="admin">Administrador</option></select><button>Criar usuário</button></form><div id="userTable"></div></div>
   <div id="audit" class="panel tab" hidden><h2>Auditoria</h2><div id="auditTable"></div></div>
 </section>
 </main><script src="app.js"></script>
