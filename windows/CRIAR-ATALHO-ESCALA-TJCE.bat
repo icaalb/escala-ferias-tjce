@@ -1,0 +1,1 @@
+@echo off\r\nsetlocal\r\nset "URL=http://servidor-interno:8080"\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0CRIAR-ATALHO-ESCALA-TJCE.ps1" -Url "%URL%"\r\npause\r\n
