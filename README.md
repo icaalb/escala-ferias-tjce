@@ -100,9 +100,13 @@ http://SERVIDOR:8080/api/health
 
 ## Documentação para TI
 
-- [Implantação na intranet](docs/IMPLANTACAO_INTRANET.md)
+- [Guia completo de implantação na intranet](docs/IMPLANTACAO_INTRANET.md)
 - [Segurança](docs/SEGURANCA.md)
 - [Banco de dados](database/README.md)
+
+O guia de implantação passou a incluir o roteiro completo para a equipe de TI: provisionamento, configuração, HTTPS, firewall, backup, restauração, monitoramento, atalhos Windows, homologação e **cadastro dos servidores/usuários autorizados**, com perfis individuais de Administrador, Operador ou Consulta.
+
+A unidade gestora deverá entregar à TI a relação dos servidores que poderão acessar a área administrativa. Não se recomenda conta compartilhada, pois a auditoria deve identificar individualmente quem realizou cada operação.
 
 ## Credenciais
 
