@@ -130,7 +130,6 @@ A versão 8.0 é um **pacote para homologação institucional**. Antes da entrad
 
 Para alterações futuras de estrutura do banco, recomenda-se adotar migrations versionadas com Alembic.
 
-
 ## Atalho na Área de Trabalho
 
 A pasta `windows/` contém:
@@ -141,3 +140,14 @@ A pasta `windows/` contém:
 - instruções específicas para a TI.
 
 A equipe de TI deve ajustar o endereço da intranet no arquivo BAT e executá-lo nas estações desejadas. O script cria o atalho **Escala TJCE - Férias** na Área de Trabalho.
+
+## Pacote Área Cível do MPCE
+
+A pasta [`area-civel/`](area-civel/) contém a versão estática atualizada para a Área Cível, com logo MPCE, autenticação Windows no IIS como referência e guia do usuário:
+
+- [Aplicação Área Cível](area-civel/index.html)
+- [Guia do usuário](area-civel/GUIA-USUARIO-ESCALA-TJCE-AREA-CIVEL.md)
+- [Guia do usuário em PDF](area-civel/GUIA-USUARIO-ESCALA-TJCE-AREA-CIVEL.pdf)
+- [Instruções da pasta](area-civel/README.md)
+
+Os instaladores e pacotes ZIP do desktop são distribuídos separadamente por excederem o limite recomendado para arquivos comuns do GitHub.
