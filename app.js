@@ -13,9 +13,7 @@ const organs=[
 {id:"cam-priv-5",name:"5ª Câmara de Direito Privado",area:"Direito Privado",type:"Câmara",offices:["25ª","34ª","45ª"]},
 {id:"cam-priv-6",name:"6ª Câmara de Direito Privado",area:"Direito Privado",type:"Câmara",offices:["22ª","27ª","32ª"]},
 {id:"sec-priv",name:"Seção de Direito Privado",area:"Direito Privado",type:"Seção",offices:privateOffices},
-{id:"turma-priv-1",name:"1ª Turma de Direito Privado",area:"Direito Privado",type:"Turma",offices:privateOffices},
-{id:"turma-priv-2",name:"2ª Turma de Direito Privado",area:"Direito Privado",type:"Turma",offices:privateOffices},
-{id:"nucleo-4",name:"Núcleo de Justiça 4.0",area:"Núcleo 4.0",type:"Núcleo",offices:allOffices}
+{id:"nucleo-4-priv",name:"Núcleo de Justiça 4.0 — 1ª e 2ª Turmas de Direito Privado",area:"Direito Privado",type:"Núcleo / Turmas",offices:privateOffices}
 ];
 const chambers=organs;
 const primaryMap=new Map();organs.filter(o=>o.type==="Câmara").forEach(g=>g.offices.forEach(o=>{if(!primaryMap.has(o))primaryMap.set(o,g)}));
