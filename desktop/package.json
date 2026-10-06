@@ -1,0 +1,31 @@
+{
+  "name": "escala-tjce-area-civel-desktop",
+  "version": "8.1.0",
+  "private": true,
+  "description": "Cliente Windows da Escala TJCE – Área Cível",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "br.mpce.escala-tjce.area-civel",
+    "productName": "Escala TJCE - Area Civel",
+    "files": ["main.cjs", "preload.cjs", "setup.html", "package.json"],
+    "directories": {"output": "dist"},
+    "win": {"target": "nsis"},
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "Instalar-Escala-TJCE-Area-Civel-8.1.exe"
+    }
+  }
+}
+

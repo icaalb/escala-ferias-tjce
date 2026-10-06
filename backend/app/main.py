@@ -3,6 +3,7 @@ from typing import Optional
 import json
 from fastapi import FastAPI, Depends, HTTPException, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session as DBSession
 from .db import Base, engine, SessionLocal, get_db
@@ -10,7 +11,7 @@ from .config import settings
 from .models import User, Organ, Office, OrganOffice, Vacation, Substitution, Session, OrganSchedule, CalendarExclusion, AuditLog
 from .auth import hash_password, verify_password, create_access_token, current_user, require_roles
 
-app=FastAPI(title="Escala TJCE – Férias e Rodízio",version="8.0")
+app=FastAPI(title="Escala TJCE – Área Cível",version="8.1")
 app.add_middleware(CORSMiddleware,allow_origins=[x.strip() for x in settings.cors_origins.split(",")],allow_credentials=True,allow_methods=["*"],allow_headers=["*"])
 
 PUBLIC={
@@ -61,7 +62,12 @@ def startup():
     seed()
 
 @app.get("/api/health")
-def health(): return {"status":"ok","version":"8.0"}
+def health(): return {"status":"ok","version":"8.1"}
+
+class NewUser(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=8)
+    role: str = "viewer"
 
 @app.post("/api/auth/login")
 def login(username:str=Form(...),password:str=Form(...),db:DBSession=Depends(get_db)):
@@ -79,7 +85,10 @@ def list_users(db:DBSession=Depends(get_db),user:User=Depends(require_roles("adm
     return [{"id":x.id,"username":x.username,"role":x.role,"active":x.active,"created_at":x.created_at} for x in rows]
 
 @app.post("/api/users")
-def create_user(username:str,password:str,role:str="viewer",db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
+def create_user(new_user:NewUser,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
+    username=new_user.username.strip()
+    password=new_user.password
+    role=new_user.role
     if role not in {"admin","operator","viewer"}: raise HTTPException(400,"Perfil inválido")
     if db.scalar(select(User).where(User.username==username)): raise HTTPException(409,"Usuário já existe")
     row=User(username=username,password_hash=hash_password(password),role=role,active=True);db.add(row);db.flush()
@@ -103,6 +112,7 @@ def organs(db:DBSession=Depends(get_db),user:User=Depends(current_user)):
 
 def vacation_conflicts(db,office,start,end,ignore_id=None):
     if end<start: return ["Data final anterior à inicial."]
+    if end.year!=start.year: return ["O período deve começar e terminar no mesmo exercício."]
     duration=(end-start).days+1
     issues=[]
     if duration<10 or duration>30: issues.append("O período deve ter entre 10 e 30 dias.")
@@ -131,6 +141,7 @@ def create_vacation(office_id:int,start:date,end:date,status:str="approved",db:D
     issues=vacation_conflicts(db,office,start,end)
     if issues: raise HTTPException(409,detail={"conflicts":issues})
     row=Vacation(office_id=office_id,start_date=start,end_date=end,year=start.year,status=status,created_by=user.id);db.add(row);db.flush()
+    refresh_sessions(db,start.year)
     audit(db,user,"CREATE","vacation",row.id,{"office":office.number,"start":start,"end":end});db.commit();db.refresh(row)
     return {"id":row.id}
 
@@ -138,7 +149,9 @@ def create_vacation(office_id:int,start:date,end:date,status:str="approved",db:D
 def delete_vacation(vacation_id:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
     row=db.get(Vacation,vacation_id)
     if not row: raise HTTPException(404,"Férias não encontradas")
-    audit(db,user,"DELETE","vacation",row.id,{"start":row.start_date,"end":row.end_date});db.delete(row);db.commit()
+    affected_year=row.year
+    audit(db,user,"DELETE","vacation",row.id,{"start":row.start_date,"end":row.end_date});db.delete(row);db.flush()
+    refresh_sessions(db,affected_year);db.commit()
     return {"ok":True}
 
 @app.get("/api/substitutions")
@@ -149,11 +162,24 @@ def list_substitutions(db:DBSession=Depends(get_db),user:User=Depends(current_us
 @app.post("/api/substitutions")
 def set_substitution(office_id:int,substitute_office_id:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
     if office_id==substitute_office_id: raise HTTPException(400,"Titular e substituta devem ser diferentes")
+    if not db.get(Office,office_id) or not db.get(Office,substitute_office_id): raise HTTPException(404,"Procuradoria não encontrada")
     row=db.scalar(select(Substitution).where(Substitution.office_id==office_id))
     if row: row.substitute_office_id=substitute_office_id;row.active=True
     else: row=Substitution(office_id=office_id,substitute_office_id=substitute_office_id,active=True);db.add(row)
-    db.flush();audit(db,user,"UPSERT","substitution",row.id,{"office_id":office_id,"substitute_office_id":substitute_office_id});db.commit()
+    db.flush()
+    refresh_sessions(db)
+    audit(db,user,"UPSERT","substitution",row.id,{"office_id":office_id,"substitute_office_id":substitute_office_id});db.commit()
     return {"id":row.id}
+
+@app.delete("/api/substitutions/{substitution_id}")
+def delete_substitution(substitution_id:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    row=db.get(Substitution,substitution_id)
+    if not row: raise HTTPException(404,"Substituição não encontrada")
+    row.active=False
+    refresh_sessions(db)
+    audit(db,user,"DELETE","substitution",row.id)
+    db.commit()
+    return {"ok":True}
 
 def resolve_effective(db,office_id,session_date):
     vac=db.scalar(select(Vacation).where(Vacation.office_id==office_id,Vacation.start_date<=session_date,Vacation.end_date>=session_date))
@@ -162,6 +188,13 @@ def resolve_effective(db,office_id,session_date):
     if not sub: return None,"pending_no_substitute"
     sub_vac=db.scalar(select(Vacation).where(Vacation.office_id==sub.substitute_office_id,Vacation.start_date<=session_date,Vacation.end_date>=session_date))
     return (None,"pending_substitute_unavailable") if sub_vac else (sub.substitute_office_id,"substitution")
+
+def refresh_sessions(db,year=None):
+    query=select(Session)
+    if year is not None:
+        query=query.where(func.extract("year",Session.session_date)==year)
+    for row in db.scalars(query).all():
+        row.effective_office_id,row.status=resolve_effective(db,row.nominal_office_id,row.session_date)
 
 
 @app.get("/api/schedule-config")
@@ -187,9 +220,18 @@ def list_exclusions(year:int=Query(...),db:DBSession=Depends(get_db),user:User=D
 
 @app.post("/api/exclusions")
 def create_exclusion(organ_id:int,excluded_date:date,reason:Optional[str]=None,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    if not db.get(Organ,organ_id): raise HTTPException(404,"Órgão não encontrado")
     row=CalendarExclusion(organ_id=organ_id,excluded_date=excluded_date,reason=reason);db.add(row);db.flush()
     audit(db,user,"CREATE","calendar_exclusion",row.id,{"organ_id":organ_id,"date":excluded_date,"reason":reason});db.commit()
     return {"id":row.id}
+
+@app.delete("/api/exclusions/{exclusion_id}")
+def delete_exclusion(exclusion_id:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    row=db.get(CalendarExclusion,exclusion_id)
+    if not row: raise HTTPException(404,"Exclusão não encontrada")
+    audit(db,user,"DELETE","calendar_exclusion",row.id)
+    db.delete(row);db.commit()
+    return {"ok":True}
 
 @app.post("/api/sessions/generate")
 def generate_sessions(year:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
@@ -197,6 +239,7 @@ def generate_sessions(year:int,db:DBSession=Depends(get_db),user:User=Depends(re
     if not schedules: raise HTTPException(409,"Nenhum órgão possui dia semanal configurado")
     old=list(db.scalars(select(Session).where(Session.origin=="automatic",func.extract("year",Session.session_date)==year)).all())
     for x in old: db.delete(x)
+    db.flush()
     generated=0;skipped=0
     for cfg in schedules:
         links=list(db.scalars(select(OrganOffice).where(OrganOffice.organ_id==cfg.organ_id).order_by(OrganOffice.position)).all())
@@ -229,13 +272,24 @@ def list_sessions(year:int=Query(...),db:DBSession=Depends(get_db),user:User=Dep
 
 @app.post("/api/sessions")
 def create_session(organ_id:int,session_date:date,nominal_office_id:int,note:Optional[str]=None,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    if not db.get(Organ,organ_id): raise HTTPException(404,"Órgão não encontrado")
+    if not db.scalar(select(OrganOffice).where(OrganOffice.organ_id==organ_id,OrganOffice.office_id==nominal_office_id)):
+        raise HTTPException(400,"A Procuradoria não integra o órgão selecionado")
     effective,status=resolve_effective(db,nominal_office_id,session_date)
     row=Session(organ_id=organ_id,session_date=session_date,nominal_office_id=nominal_office_id,effective_office_id=effective,status=status,origin="manual",note=note,created_by=user.id)
     db.add(row);db.flush();audit(db,user,"CREATE","session",row.id,{"date":session_date,"status":status});db.commit();db.refresh(row)
     return {"id":row.id,"status":row.status,"effective_office_id":row.effective_office_id}
 
+@app.delete("/api/sessions/{session_id}")
+def delete_session(session_id:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    row=db.get(Session,session_id)
+    if not row: raise HTTPException(404,"Sessão não encontrada")
+    audit(db,user,"DELETE","session",row.id)
+    db.delete(row);db.commit()
+    return {"ok":True}
+
 @app.get("/api/public/dashboard")
-def public_dashboard(year:int=Query(...),db:DBSession=Depends(get_db)):
+def public_dashboard(year:int=Query(...),db:DBSession=Depends(get_db),user:User=Depends(current_user)):
     rows=db.execute(select(Session,Organ,Office).join(Organ,Organ.id==Session.organ_id).join(Office,Office.id==Session.nominal_office_id).where(func.extract("year",Session.session_date)==year).order_by(Session.session_date)).all()
     out=[]
     for s,o,off in rows:
@@ -247,3 +301,4 @@ def public_dashboard(year:int=Query(...),db:DBSession=Depends(get_db)):
 def audit_list(limit:int=100,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
     rows=list(db.scalars(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(min(limit,500))).all())
     return [{"id":x.id,"user_id":x.user_id,"action":x.action,"entity":x.entity,"entity_id":x.entity_id,"details":x.details,"created_at":x.created_at} for x in rows]
+

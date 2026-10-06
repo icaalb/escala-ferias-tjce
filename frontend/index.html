@@ -5,24 +5,32 @@
 <title>Escala TJCE — MPCE</title><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header><div><strong>Escala TJCE — Férias e Rodízio</strong><span>Versão Institucional 8.0</span></div><button id="logout" hidden>Sair</button></header>
+<header><div class="brand"><img src="mpce-logo.svg" alt="MPCE"><div><strong>Escala TJCE — Área Cível</strong><span>Versão unificada 8.1 · MPCE</span></div></div><button id="logout" hidden>Sair</button></header>
 <main>
-<section id="public">
-  <div class="hero"><div><small>CONSULTA</small><h1>Escala de atuação perante o TJCE</h1><p>Painel somente leitura.</p></div><select id="publicYear"><option>2027</option><option>2028</option></select></div>
-  <div id="publicStats" class="cards"></div><div class="panel"><h2>Agenda consolidada</h2><div id="publicTable"></div></div>
-</section>
 <section id="login" class="panel login">
-  <h2>Área administrativa</h2><form id="loginForm"><input id="username" placeholder="Usuário" required><input id="password" type="password" placeholder="Senha" required><button>Entrar</button></form><p id="loginMsg"></p>
+  <h2>Acesso à Área Cível</h2><p>Entre com o usuário e a senha fornecidos pela administração.</p><form id="loginForm"><input id="username" autocomplete="username" placeholder="Usuário" required><input id="password" type="password" autocomplete="current-password" placeholder="Senha" required><button>Entrar</button></form><p id="loginMsg" role="alert"></p>
+</section>
+<section id="public" hidden>
+  <div class="hero"><div><small>CONSULTA</small><h1>Escala de atuação perante o TJCE</h1><p>Painel somente leitura.</p></div><select id="publicYear"><option>2027</option><option>2028</option></select></div>
+  <div class="filters"><select id="publicArea"><option value="all">Todas as áreas</option><option>Direito Público</option><option>Direito Privado</option></select><select id="publicOrgan"><option value="all">Todos os órgãos</option></select><select id="publicMonth"><option value="all">Ano inteiro</option></select><button id="exportCsv" type="button">Exportar CSV</button><button id="print" type="button">Imprimir/PDF</button></div>
+  <div id="publicStats" class="cards"></div><div class="panel"><h2>Agenda consolidada</h2><div id="publicTable"></div></div>
+  <div class="panel"><h2>Resumo por órgão</h2><div id="organSummary"></div></div>
+  <div class="panel"><h2>Calendário mensal de atuações</h2><div id="monthlySummary"></div></div>
 </section>
 <section id="admin" hidden>
-  <nav><button data-tab="vacations">Férias</button><button data-tab="generator">Gerador anual</button><button data-tab="sessions">Sessões</button><button data-tab="subs">Substituições</button><button data-tab="users">Usuários</button><button data-tab="audit">Auditoria</button></nav>
+  <nav><button data-tab="dashboard">Painel geral</button><button data-tab="chambers">Câmaras</button><button data-tab="conflicts">Conflitos</button><button data-tab="coverage">Cobertura</button><button data-tab="calendar">Calendário de férias</button><button data-tab="vacations">Férias</button><button data-tab="generator">Gerador anual</button><button data-tab="sessions">Sessões</button><button data-tab="subs">Substituições</button><button data-tab="users">Usuários</button><button data-tab="audit">Auditoria</button></nav>
   <div id="identity"></div>
+  <div id="dashboard" class="panel tab"><h2>Painel geral</h2><div id="dashboardStats" class="cards"></div><div id="dashboardTable"></div></div>
+  <div id="chambers" class="panel tab" hidden><h2>Painel por Câmara</h2><select id="chamberFilter"></select><div id="chamberTable"></div><h3>Composição dos órgãos</h3><div id="organTable"></div></div>
+  <div id="conflicts" class="panel tab" hidden><h2>Conflitos de férias</h2><div id="conflictTable"></div></div>
+  <div id="coverage" class="panel tab" hidden><h2>Escala de cobertura</h2><p>Procuradorias disponíveis na mesma Câmara durante os períodos de férias. A indicação não define substituto automaticamente.</p><div id="coverageTable"></div></div>
+  <div id="calendar" class="panel tab" hidden><h2>Calendário de férias</h2><div id="calendarTable"></div></div>
   <div id="vacations" class="panel tab">
     <h2>Férias</h2><form id="vacForm"><select id="vacOffice"></select><input id="vacStart" type="date" required><input id="vacEnd" type="date" required><button>Adicionar</button></form><div id="vacMsg"></div><div id="vacTable"></div>
   </div>
   <div id="generator" class="panel tab" hidden>
     <h2>Gerador anual</h2><p>Defina o dia semanal de sessão por órgão e gere a escala do exercício.</p>
-    <div id="scheduleConfig"></div><button id="generateYear">Gerar escala anual</button><p id="generateMsg"></p>
+    <div id="scheduleConfig"></div><form id="exclusionForm"><select id="exclusionOrgan"></select><input id="exclusionDate" type="date" required><input id="exclusionReason" placeholder="Motivo da data sem sessão"><button>Adicionar exclusão</button></form><div id="exclusionTable"></div><button id="generateYear">Gerar escala anual</button><p id="generateMsg"></p>
   </div>
   <div id="sessions" class="panel tab" hidden>
     <h2>Sessões TJCE</h2><form id="sessionForm"><select id="sessionOrgan"></select><select id="sessionOffice"></select><input id="sessionDate" type="date" required><input id="sessionNote" placeholder="Observação"><button>Adicionar</button></form><div id="sessionTable"></div>
@@ -35,3 +43,4 @@
 </section>
 </main><script src="app.js"></script>
 </body></html>
+
