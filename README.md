@@ -8,9 +8,7 @@ Sistema web para organização de férias das Procuradorias de Justiça com atua
 - composição das Câmaras de Direito Público e de Direito Privado;
 - inclusão da Seção de Direito Público;
 - inclusão da Seção de Direito Privado;
-- inclusão do Núcleo de Justiça 4.0;
-- inclusão da 1ª Turma de Direito Privado;
-- inclusão da 2ª Turma de Direito Privado;
+- inclusão do Núcleo de Justiça 4.0, composto pela 1ª Turma de Direito Privado e pela 2ª Turma de Direito Privado;
 - controle de 60 dias anuais;
 - validação de períodos entre 10 e 30 dias;
 - limite de até 6 períodos;
@@ -46,12 +44,7 @@ Sistema web para organização de férias das Procuradorias de Justiça com atua
 - 5ª Câmara de Direito Privado: 25ª, 34ª e 45ª Procuradorias
 - 6ª Câmara de Direito Privado: 22ª, 27ª e 32ª Procuradorias
 - Seção de Direito Privado: rodízio com todas as Procuradorias de Direito Privado
-- 1ª Turma de Direito Privado: rodízio com todas as Procuradorias de Direito Privado
-- 2ª Turma de Direito Privado: rodízio com todas as Procuradorias de Direito Privado
-
-### Núcleo
-
-- Núcleo de Justiça 4.0: rodízio com todas as Procuradorias cadastradas
+- Núcleo de Justiça 4.0 — 1ª e 2ª Turmas de Direito Privado: tratado como um único bloco institucional, com rodízio entre as Procuradorias de Direito Privado
 
 ## Como usar
 
@@ -78,4 +71,4 @@ Para implantação institucional ou publicação em ambiente compartilhado, reco
 
 ## Versão atual
 
-Versão 7.2 — inclui Seções de Direito Público e Privado, Núcleo de Justiça 4.0, 1ª Turma de Direito Privado e 2ª Turma de Direito Privado.
+Versão 7.3 — corrige a estrutura do Núcleo de Justiça 4.0, reunindo nele a 1ª Turma de Direito Privado e a 2ª Turma de Direito Privado.
