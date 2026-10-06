@@ -19,6 +19,7 @@ A versão 8.0 acrescenta backend, PostgreSQL, autenticação, perfis de acesso, 
 ├── deploy/                   # configuração do Nginx
 ├── docs/                     # implantação e segurança
 ├── scripts/                  # backup e restauração
+├── windows/                  # atalho e ícone para estações Windows
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
@@ -50,7 +51,8 @@ A versão 8.0 acrescenta backend, PostgreSQL, autenticação, perfis de acesso, 
 - cálculo da atuação efetiva quando o titular estiver de férias;
 - exportação e painel consolidado;
 - backup e restauração;
-- execução em Docker.
+- execução em Docker;
+- pacote Windows para criação automática de atalho na Área de Trabalho, com ícone próprio.
 
 ## Órgãos pré-carregados
 
@@ -123,3 +125,15 @@ A versão 8.0 é um **pacote para homologação institucional**. Antes da entrad
 - LGPD e dados expostos no painel público.
 
 Para alterações futuras de estrutura do banco, recomenda-se adotar migrations versionadas com Alembic.
+
+
+## Atalho na Área de Trabalho
+
+A pasta `windows/` contém:
+
+- `CRIAR-ATALHO-ESCALA-TJCE.bat`;
+- `CRIAR-ATALHO-ESCALA-TJCE.ps1`;
+- `escala-tjce.ico`;
+- instruções específicas para a TI.
+
+A equipe de TI deve ajustar o endereço da intranet no arquivo BAT e executá-lo nas estações desejadas. O script cria o atalho **Escala TJCE - Férias** na Área de Trabalho.
