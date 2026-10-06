@@ -67,6 +67,13 @@ class Session(Base):
     note: Mapped[str|None]=mapped_column(Text, nullable=True)
     created_by: Mapped[int|None]=mapped_column(ForeignKey("users.id"), nullable=True)
 
+class OrganSchedule(Base):
+    __tablename__="organ_schedules"
+    id: Mapped[int]=mapped_column(primary_key=True)
+    organ_id: Mapped[int]=mapped_column(ForeignKey("organs.id"), unique=True)
+    weekday: Mapped[int]=mapped_column(Integer)
+    active: Mapped[bool]=mapped_column(Boolean, default=True)
+
 class CalendarExclusion(Base):
     __tablename__="calendar_exclusions"
     __table_args__=(UniqueConstraint("organ_id","excluded_date"),)
