@@ -1,29 +1,56 @@
 # Escala TJCE – Férias e Rodízio
 
-Sistema web para organização de férias das Procuradorias de Justiça com atuação perante o TJCE, geração de rodízio anual, controle de substituições, identificação de conflitos e painel público somente leitura.
+Sistema institucional para gestão de férias das Procuradorias de Justiça com atuação perante o TJCE, geração e consolidação de escalas, substituições, identificação de conflitos, auditoria e painel público somente leitura.
 
-## Funcionalidades
+## Versão atual
 
-- cadastro de períodos de férias por número da Procuradoria;
-- composição das Câmaras de Direito Público e de Direito Privado;
-- inclusão da Seção de Direito Público;
-- inclusão da Seção de Direito Privado;
-- inclusão do Núcleo de Justiça 4.0, composto pela 1ª Turma de Direito Privado e pela 2ª Turma de Direito Privado;
-- controle de 60 dias anuais;
+**8.0 — arquitetura institucional para intranet**
+
+A versão 8.0 acrescenta backend, PostgreSQL, autenticação, perfis de acesso, API, auditoria, Docker, proxy reverso e documentação de implantação.
+
+## Estrutura do repositório
+
+```text
+.
+├── frontend/                 # interface institucional conectada à API
+├── backend/                  # FastAPI, autenticação e regras de negócio
+│   └── app/
+├── database/                 # documentação do esquema
+├── deploy/                   # configuração do Nginx
+├── docs/                     # implantação e segurança
+├── scripts/                  # backup e restauração
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+├── index.html                # protótipo legado 7.x
+├── app.js                    # protótipo legado 7.x
+└── styles.css                # protótipo legado 7.x
+```
+
+> Os arquivos da raiz foram mantidos como referência do protótipo anterior. Para implantação na intranet, utilize a aplicação em `frontend/` + `backend/` através do `docker-compose.yml`.
+
+## Funcionalidades institucionais
+
+- banco PostgreSQL central;
+- frontend conectado à API;
+- autenticação JWT;
+- senhas com hash bcrypt;
+- perfis `admin`, `operator` e `viewer`;
+- painel público sem permissão de escrita;
+- criação administrativa de usuários via API;
+- auditoria de operações;
+- férias por Procuradoria;
 - validação de períodos entre 10 e 30 dias;
 - limite de até 6 períodos;
-- identificação de sobreposição dentro da mesma Câmara de vinculação principal;
-- controle de férias em janeiro, julho e dezembro;
-- geração automática da escala anual do TJCE por rodízio;
-- configuração do dia semanal de sessão por órgão;
-- cadastro de datas sem sessão;
-- tabela de substituições;
-- verificação automática de coincidência entre escala e férias;
-- painel específico por órgão;
-- escala consolidada;
-- exportação CSV;
-- impressão/PDF;
-- painel público interativo e somente leitura.
+- controle de 60 dias anuais;
+- detecção de sobreposição;
+- controle do limite de afastamento simultâneo na Câmara;
+- sessões do TJCE;
+- substituições;
+- cálculo da atuação efetiva quando o titular estiver de férias;
+- exportação e painel consolidado;
+- backup e restauração;
+- execução em Docker.
 
 ## Órgãos pré-carregados
 
@@ -44,31 +71,55 @@ Sistema web para organização de férias das Procuradorias de Justiça com atua
 - 5ª Câmara de Direito Privado: 25ª, 34ª e 45ª Procuradorias
 - 6ª Câmara de Direito Privado: 22ª, 27ª e 32ª Procuradorias
 - Seção de Direito Privado: rodízio com todas as Procuradorias de Direito Privado
-- Núcleo de Justiça 4.0 — 1ª e 2ª Turmas de Direito Privado: tratado como um único bloco institucional, com rodízio entre as Procuradorias de Direito Privado
+- Núcleo de Justiça 4.0 — 1ª e 2ª Turmas de Direito Privado: um único bloco institucional com rodízio entre as Procuradorias de Direito Privado
 
-## Como usar
+## Implantação rápida
 
-1. Abra `index.html`.
-2. Lance os períodos de férias.
-3. Configure os dias de sessão dos órgãos.
-4. Cadastre as substituições.
-5. Informe datas sem sessão, quando necessário.
-6. Gere a escala anual.
-7. Consulte o painel por órgão e a escala consolidada.
-8. Use o painel público para consulta sem edição.
+```bash
+git clone https://github.com/icaalb/escala-ferias-tjce.git
+cd escala-ferias-tjce
+cp .env.example .env
+# editar senhas, segredo JWT e origem autorizada
+docker compose build
+docker compose up -d
+```
 
-## Armazenamento
+A interface fica, por padrão, em:
 
-Nesta versão, os dados ficam armazenados no navegador por meio de `localStorage`.
+```
+http://SERVIDOR:8080
+```
 
-Para implantação institucional ou publicação em ambiente compartilhado, recomenda-se migrar para:
+Saúde da API:
 
-- banco de dados central;
-- área administrativa autenticada;
-- API de escrita protegida;
-- painel público separado e somente leitura;
-- trilha de auditoria das alterações.
+```
+http://SERVIDOR:8080/api/health
+```
 
-## Versão atual
+## Documentação para TI
 
-Versão 7.3 — corrige a estrutura do Núcleo de Justiça 4.0, reunindo nele a 1ª Turma de Direito Privado e a 2ª Turma de Direito Privado.
+- [Implantação na intranet](docs/IMPLANTACAO_INTRANET.md)
+- [Segurança](docs/SEGURANCA.md)
+- [Banco de dados](database/README.md)
+
+## Credenciais
+
+O administrador inicial é criado a partir do arquivo `.env`.
+
+Nunca utilize em produção os valores de exemplo.
+
+## Observações de produção
+
+A versão 8.0 é um **pacote para homologação institucional**. Antes da entrada em produção, a TI do MPCE deve validar:
+
+- TLS/HTTPS;
+- integração com LDAP/AD/OIDC, se exigida;
+- política institucional de logs;
+- backup e restauração;
+- monitoramento;
+- varredura de vulnerabilidades;
+- regras de firewall;
+- retenção da auditoria;
+- LGPD e dados expostos no painel público.
+
+Para alterações futuras de estrutura do banco, recomenda-se adotar migrations versionadas com Alembic.
