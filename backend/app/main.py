@@ -7,7 +7,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session as DBSession
 from .db import Base, engine, SessionLocal, get_db
 from .config import settings
-from .models import User, Organ, Office, OrganOffice, Vacation, Substitution, Session, CalendarExclusion, AuditLog
+from .models import User, Organ, Office, OrganOffice, Vacation, Substitution, Session, OrganSchedule, CalendarExclusion, AuditLog
 from .auth import hash_password, verify_password, create_access_token, current_user, require_roles
 
 app=FastAPI(title="Escala TJCE – Férias e Rodízio",version="8.0")
@@ -162,6 +162,65 @@ def resolve_effective(db,office_id,session_date):
     if not sub: return None,"pending_no_substitute"
     sub_vac=db.scalar(select(Vacation).where(Vacation.office_id==sub.substitute_office_id,Vacation.start_date<=session_date,Vacation.end_date>=session_date))
     return (None,"pending_substitute_unavailable") if sub_vac else (sub.substitute_office_id,"substitution")
+
+
+@app.get("/api/schedule-config")
+def list_schedule_config(db:DBSession=Depends(get_db),user:User=Depends(current_user)):
+    rows=db.execute(select(OrganSchedule,Organ).join(Organ,Organ.id==OrganSchedule.organ_id).order_by(Organ.name)).all()
+    return [{"id":s.id,"organ_id":o.id,"organ":o.name,"weekday":s.weekday,"active":s.active} for s,o in rows]
+
+@app.post("/api/schedule-config")
+def set_schedule_config(organ_id:int,weekday:int,active:bool=True,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    if weekday<0 or weekday>6: raise HTTPException(400,"Dia da semana inválido")
+    row=db.scalar(select(OrganSchedule).where(OrganSchedule.organ_id==organ_id))
+    if row:
+        row.weekday=weekday;row.active=active
+    else:
+        row=OrganSchedule(organ_id=organ_id,weekday=weekday,active=active);db.add(row)
+    db.flush();audit(db,user,"UPSERT","organ_schedule",row.id,{"organ_id":organ_id,"weekday":weekday,"active":active});db.commit()
+    return {"id":row.id}
+
+@app.get("/api/exclusions")
+def list_exclusions(year:int=Query(...),db:DBSession=Depends(get_db),user:User=Depends(current_user)):
+    rows=db.execute(select(CalendarExclusion,Organ).join(Organ,Organ.id==CalendarExclusion.organ_id).where(func.extract("year",CalendarExclusion.excluded_date)==year).order_by(CalendarExclusion.excluded_date)).all()
+    return [{"id":x.id,"organ_id":o.id,"organ":o.name,"date":x.excluded_date,"reason":x.reason} for x,o in rows]
+
+@app.post("/api/exclusions")
+def create_exclusion(organ_id:int,excluded_date:date,reason:Optional[str]=None,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    row=CalendarExclusion(organ_id=organ_id,excluded_date=excluded_date,reason=reason);db.add(row);db.flush()
+    audit(db,user,"CREATE","calendar_exclusion",row.id,{"organ_id":organ_id,"date":excluded_date,"reason":reason});db.commit()
+    return {"id":row.id}
+
+@app.post("/api/sessions/generate")
+def generate_sessions(year:int,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin","operator"))):
+    schedules=list(db.scalars(select(OrganSchedule).where(OrganSchedule.active==True)).all())
+    if not schedules: raise HTTPException(409,"Nenhum órgão possui dia semanal configurado")
+    old=list(db.scalars(select(Session).where(Session.origin=="automatic",func.extract("year",Session.session_date)==year)).all())
+    for x in old: db.delete(x)
+    generated=0;skipped=0
+    for cfg in schedules:
+        links=list(db.scalars(select(OrganOffice).where(OrganOffice.organ_id==cfg.organ_id).order_by(OrganOffice.position)).all())
+        if not links: continue
+        office_ids=[x.office_id for x in links]
+        idx=0
+        d=date(year,1,1)
+        last=date(year,12,31)
+        while d<=last:
+            if d.weekday()==cfg.weekday:
+                excluded_row=db.scalar(select(CalendarExclusion).where(CalendarExclusion.organ_id==cfg.organ_id,CalendarExclusion.excluded_date==d))
+                if excluded_row:
+                    skipped+=1
+                else:
+                    nominal=office_ids[idx % len(office_ids)]
+                    manual=db.scalar(select(Session).where(Session.organ_id==cfg.organ_id,Session.session_date==d,Session.origin=="manual"))
+                    if not manual:
+                        effective,status=resolve_effective(db,nominal,d)
+                        db.add(Session(organ_id=cfg.organ_id,session_date=d,nominal_office_id=nominal,effective_office_id=effective,status=status,origin="automatic",note="Rodízio automático",created_by=user.id))
+                        generated+=1
+                    idx+=1
+            d+=timedelta(days=1)
+    audit(db,user,"GENERATE","sessions",str(year),{"generated":generated,"skipped":skipped});db.commit()
+    return {"year":year,"generated":generated,"skipped":skipped}
 
 @app.get("/api/sessions")
 def list_sessions(year:int=Query(...),db:DBSession=Depends(get_db),user:User=Depends(current_user)):
