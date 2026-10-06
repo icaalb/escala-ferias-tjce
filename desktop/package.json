@@ -17,7 +17,7 @@
     "productName": "Escala TJCE - Area Civel",
     "files": ["main.cjs", "preload.cjs", "setup.html", "package.json"],
     "directories": {"output": "dist"},
-    "win": {"target": "nsis"},
+    "win": {"target": "nsis", "icon": "../windows/escala-tjce.ico"},
     "nsis": {
       "oneClick": false,
       "perMachine": false,

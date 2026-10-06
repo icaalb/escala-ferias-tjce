@@ -14,4 +14,5 @@ npm run dist:win
 
 O arquivo resultante estará em `desktop/dist/`. A TI deve testar, assinar o instalador conforme sua política e homologar o endereço antes de distribuí-lo. O código-fonte publicado aqui não é, por si só, um `.exe` pronto.
 
+O fluxo automatizado em `.github/workflows/desktop-windows.yml` também gera um artefato de instalador na aba **Actions** do GitHub. Artefatos são temporários; a TI deve baixá-lo, testá-lo e publicá-lo no canal institucional aprovado. Não substitua o pacote antigo da versão estática pelo novo sem migração e homologação.
 
