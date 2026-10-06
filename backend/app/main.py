@@ -73,6 +73,26 @@ def login(username:str=Form(...),password:str=Form(...),db:DBSession=Depends(get
 @app.get("/api/me")
 def me(user:User=Depends(current_user)): return {"id":user.id,"username":user.username,"role":user.role}
 
+@app.get("/api/users")
+def list_users(db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
+    rows=list(db.scalars(select(User).order_by(User.username)).all())
+    return [{"id":x.id,"username":x.username,"role":x.role,"active":x.active,"created_at":x.created_at} for x in rows]
+
+@app.post("/api/users")
+def create_user(username:str,password:str,role:str="viewer",db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
+    if role not in {"admin","operator","viewer"}: raise HTTPException(400,"Perfil inválido")
+    if db.scalar(select(User).where(User.username==username)): raise HTTPException(409,"Usuário já existe")
+    row=User(username=username,password_hash=hash_password(password),role=role,active=True);db.add(row);db.flush()
+    audit(db,user,"CREATE","user",row.id,{"username":username,"role":role});db.commit();db.refresh(row)
+    return {"id":row.id,"username":row.username,"role":row.role}
+
+@app.patch("/api/users/{user_id}/status")
+def set_user_status(user_id:int,active:bool,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
+    row=db.get(User,user_id)
+    if not row: raise HTTPException(404,"Usuário não encontrado")
+    row.active=active;audit(db,user,"UPDATE","user",row.id,{"active":active});db.commit()
+    return {"ok":True}
+
 @app.get("/api/organs")
 def organs(db:DBSession=Depends(get_db),user:User=Depends(current_user)):
     rows=db.execute(select(Organ,Office,OrganOffice).join(OrganOffice,OrganOffice.organ_id==Organ.id).join(Office,Office.id==OrganOffice.office_id).where(Organ.active==True).order_by(Organ.id,OrganOffice.position)).all()
@@ -158,7 +178,11 @@ def create_session(organ_id:int,session_date:date,nominal_office_id:int,note:Opt
 @app.get("/api/public/dashboard")
 def public_dashboard(year:int=Query(...),db:DBSession=Depends(get_db)):
     rows=db.execute(select(Session,Organ,Office).join(Organ,Organ.id==Session.organ_id).join(Office,Office.id==Session.nominal_office_id).where(func.extract("year",Session.session_date)==year).order_by(Session.session_date)).all()
-    return [{"date":s.session_date,"organ":o.name,"area":o.area,"nominal_office":off.number,"effective_office_id":s.effective_office_id,"status":s.status,"note":s.note} for s,o,off in rows]
+    out=[]
+    for s,o,off in rows:
+        effective=db.get(Office,s.effective_office_id) if s.effective_office_id else None
+        out.append({"date":s.session_date,"organ":o.name,"area":o.area,"nominal_office":off.number,"effective_office":effective.number if effective else None,"status":s.status,"note":s.note})
+    return out
 
 @app.get("/api/audit")
 def audit_list(limit:int=100,db:DBSession=Depends(get_db),user:User=Depends(require_roles("admin"))):
