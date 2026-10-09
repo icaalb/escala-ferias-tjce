@@ -1,0 +1,13 @@
+ESCALA TJCE - COMO INSTALAR O ATALHO
+
+1. Baixe a pasta windows do repositório ou baixe o repositório completo.
+2. Abra a pasta windows.
+3. Dê dois cliques em:
+   INSTALAR-ATALHO-ESCALA-TJCE.bat
+4. Digite o endereço atual do sistema na intranet.
+5. Pressione ENTER.
+6. O atalho "Escala TJCE - Férias" será criado na Área de Trabalho.
+7. O ícone escala-tjce.ico será aplicado automaticamente.
+
+Observação:
+O endereço pode ser alterado pela TI a qualquer momento. Basta executar o instalador novamente informando o novo endereço.
