@@ -6,30 +6,44 @@ Use o arquivo:
 
 `INSTALAR-ATALHO-ESCALA-TJCE.bat`
 
-Ao executar, ele pergunta qual é o endereço atual do sistema e cria automaticamente na Área de Trabalho o atalho:
+O usuário **não precisa informar nenhum endereço**.
+
+Ao executar o instalador, o sistema lê automaticamente o endereço configurado pela TI no arquivo:
+
+`ENDERECO-SISTEMA.txt`
+
+e cria na Área de Trabalho o atalho:
 
 **Escala TJCE - Férias**
 
 com o ícone `escala-tjce.ico`.
 
+## Configuração pela TI
+
+Antes de distribuir o pacote aos usuários, a equipe de TI deve editar:
+
+`ENDERECO-SISTEMA.txt`
+
+e substituir o valor de exemplo pelo endereço real do sistema na intranet.
+
+Exemplo:
+
+`https://escala-tjce.intranet.mpce.mp.br`
+
+Depois disso, os usuários apenas executam:
+
+`INSTALAR-ATALHO-ESCALA-TJCE.bat`
+
 ## Arquivos da pasta
 
-- `INSTALAR-ATALHO-ESCALA-TJCE.bat` — instalador simplificado recomendado;
+- `INSTALAR-ATALHO-ESCALA-TJCE.bat` — instalador recomendado;
 - `INSTALAR-ATALHO-ESCALA-TJCE.ps1`;
-- `CRIAR-ATALHO-ESCALA-TJCE.bat` — alternativa com URL definida no arquivo;
-- `CRIAR-ATALHO-ESCALA-TJCE.ps1` — mecanismo de criação do atalho;
+- `CRIAR-ATALHO-ESCALA-TJCE.bat`;
+- `CRIAR-ATALHO-ESCALA-TJCE.ps1`;
+- `ENDERECO-SISTEMA.txt` — endereço definido pela TI;
 - `escala-tjce.ico` — ícone do sistema;
 - `COMO-INSTALAR-O-ATALHO.txt` — instruções rápidas.
 
-## Instalação
-
-1. Baixe o repositório ou a pasta `windows`.
-2. Abra a pasta `windows`.
-3. Execute `INSTALAR-ATALHO-ESCALA-TJCE.bat`.
-4. Informe o endereço atual do sistema.
-5. Pressione Enter.
-6. O atalho será criado automaticamente na Área de Trabalho.
-
 ## Distribuição institucional
 
-A equipe de TI pode distribuir o pacote por GPO ou outra ferramenta de gerenciamento de estações. Também pode executar diretamente o PowerShell informando a URL do sistema.
+A TI pode distribuir toda a pasta `windows` por GPO ou outra ferramenta de gerenciamento de estações. Assim, o endereço é configurado centralmente e o usuário final não precisa fazer qualquer ajuste.
