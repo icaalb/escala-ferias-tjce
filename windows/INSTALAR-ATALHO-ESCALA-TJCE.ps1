@@ -2,12 +2,10 @@ param(
   [string]$Url
 )
 
-if (-not $Url) {
-  $Url = Read-Host "Digite o endereço atual do sistema"
-}
+$ErrorActionPreference = "Stop"
 
 if (-not $Url) {
-  Write-Host "Nenhum endereço informado. Instalação cancelada." -ForegroundColor Red
+  Write-Host "Endereço do sistema não configurado." -ForegroundColor Red
   exit 1
 }
 
